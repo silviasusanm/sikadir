@@ -22,25 +22,34 @@
             </div>
 
             <div class="flex items-center space-x-4">
-                <div class="bg-indigo-900/50 p-1 rounded-xl hidden md:flex items-center space-x-2 text-sm font-medium">
-                    <span class="px-3 py-1.5 text-indigo-200">Role Mode:</span>
-                    <span class="px-3 py-1.5 text-indigo-200">Admin / Pemilik</span>
-                    <span class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg shadow-sm">Kasir</span>
-                </div>
+                {{-- Hanya tampilkan Mode Switcher jika yang login adalah Admin --}}
+                @if(auth()->check() && auth()->user()->role === 'admin')
+                    <div class="bg-indigo-900/50 p-1 rounded-xl hidden md:flex items-center space-x-2 text-sm font-medium">
+                        <span class="px-3 py-1.5 text-indigo-200">Role Mode:</span>
+                        <a href="{{ route('dashboard') }}" class="px-3 py-1.5 text-indigo-200 hover:text-white transition">Admin / Pemilik</a>
+                        <span class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg shadow-sm">Kasir</span>
+                    </div>
+                @else
+                    <div class="bg-indigo-900/50 px-3 py-1.5 rounded-xl hidden md:flex items-center text-xs font-semibold text-indigo-200">
+                        <span>Mode Kasir Aktif</span>
+                    </div>
+                @endif
                 
                 <!-- DROPDOWN PROFILE & LOGOUT -->
                 <div class="relative">
                     <button onclick="toggleUserDropdown()" class="flex items-center space-x-2 bg-indigo-900/60 hover:bg-indigo-900 px-3 py-1.5 rounded-xl border border-indigo-800 transition cursor-pointer">
-                        <div class="w-8 h-8 bg-indigo-500 text-white font-bold rounded-full flex items-center justify-center text-xs">B</div>
-                        <span class="text-sm font-semibold text-white">Budi (Kasir)</span>
+                        <div class="w-8 h-8 bg-indigo-500 text-white font-bold rounded-full flex items-center justify-center text-xs">
+                            {{ strtoupper(substr(auth()->user()->name ?? 'B', 0, 1)) }}
+                        </div>
+                        <span class="text-sm font-semibold text-white">{{ auth()->user()->name ?? 'Budi' }} ({{ ucfirst(auth()->user()->role ?? 'Kasir') }})</span>
                         <svg class="w-4 h-4 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
 
                     <!-- Popover Dropdown Menu -->
                     <div id="userDropdown" class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 hidden z-50 text-slate-800">
                         <div class="px-4 py-3 border-b border-slate-100">
-                            <p class="text-xs font-bold text-slate-900">Staf Kasir</p>
-                            <p class="text-[11px] text-slate-400 truncate">sikadir@pos.id</p>
+                            <p class="text-xs font-bold text-slate-900">{{ auth()->user()->name ?? 'Staf Kasir' }}</p>
+                            <p class="text-[11px] text-slate-400 truncate">{{ auth()->user()->email ?? 'sikadir@pos.id' }}</p>
                         </div>
                         <div class="py-1">
                             <a href="#" onclick="alert('Fitur Ubah Profil')" class="flex items-center space-x-2 px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 transition">
@@ -53,10 +62,14 @@
                             </a>
                         </div>
                         <div class="border-t border-slate-100 pt-1">
-                            <a href="#" onclick="logout()" class="flex items-center space-x-2 px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 font-semibold transition">
-                                <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                                <span>Keluar (Logout)</span>
-                            </a>
+                            {{-- Form Logout Resmi Laravel --}}
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="w-full text-left flex items-center space-x-2 px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 font-semibold transition cursor-pointer">
+                                    <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                    <span>Keluar (Logout)</span>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -68,10 +81,17 @@
     <!-- NAVIGASI MENU UTAMA -->
     <nav class="bg-white border-b border-slate-200 shadow-xs">
         <div class="max-w-7xl mx-auto px-4 flex space-x-8">
-            <a href="/dashboard" class="py-4 text-slate-500 hover:text-indigo-600 font-medium text-sm flex items-center space-x-2">Dashboard</a>
-            <a href="/pos" class="py-4 text-indigo-600 border-b-2 border-indigo-600 font-semibold text-sm flex items-center space-x-2">POS / Transaksi</a>
-            <a href="/products" class="py-4 text-slate-500 hover:text-indigo-600 font-medium text-sm flex items-center space-x-2">Data Master</a>
-            <a href="/reports" class="py-4 text-slate-500 hover:text-indigo-600 font-medium text-sm flex items-center space-x-2">Laporan & Ekspor</a>
+            {{-- Menu Navigasi Admin disembunyikan untuk Kasir --}}
+            @if(auth()->check() && auth()->user()->role === 'admin')
+                <a href="{{ route('dashboard') }}" class="py-4 text-slate-500 hover:text-indigo-600 font-medium text-sm flex items-center space-x-2">Dashboard</a>
+            @endif
+
+            <a href="{{ route('pos') }}" class="py-4 text-indigo-600 border-b-2 border-indigo-600 font-semibold text-sm flex items-center space-x-2">POS / Transaksi</a>
+
+            @if(auth()->check() && auth()->user()->role === 'admin')
+                <a href="{{ route('products.index') }}" class="py-4 text-slate-500 hover:text-indigo-600 font-medium text-sm flex items-center space-x-2">Data Master</a>
+                <a href="{{ route('reports.index') }}" class="py-4 text-slate-500 hover:text-indigo-600 font-medium text-sm flex items-center space-x-2">Laporan & Ekspor</a>
+            @endif
         </div>
     </nav>
 
@@ -88,10 +108,14 @@
                         </span>
                         <input type="text" id="searchInput" placeholder="Cari nama produk atau kode barcode..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition">
                     </div>
-                    <button onclick="openAddProductModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-xl text-xs font-bold shadow-sm transition flex items-center space-x-1.5 shrink-0 cursor-pointer">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        <span>Menu Baru</span>
-                    </button>
+                    
+                    {{-- Sembunyikan tombol Tambah Menu Baru jika pengguna adalah Kasir --}}
+                    @if(auth()->check() && auth()->user()->role === 'admin')
+                        <button onclick="openAddProductModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-xl text-xs font-bold shadow-sm transition flex items-center space-x-1.5 shrink-0 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            <span>Menu Baru</span>
+                        </button>
+                    @endif
                 </div>
 
                 <!-- Kategori Filter Pills -->
@@ -220,6 +244,9 @@
 
     <!-- SCRIPT APLIKASI -->
     <script>
+        // Cek peran pengguna untuk menyembunyikan fitur edit kartu produk pada sisi client
+        const isAdmin = {{ (auth()->check() && auth()->user()->role === 'admin') ? 'true' : 'false' }};
+
         let products = [
             { name: 'Kopi Susu Gula Aren', price: 18000, stock: 24, category: 'Minuman', image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&q=80&w=300' },
             { name: 'Nasi Goreng Spesial', price: 22000, stock: 15, category: 'Makanan', image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&q=80&w=300' },
@@ -233,24 +260,17 @@
         let selectedPayment = 'Tunai';
         let activeCategory = 'Semua';
 
-        // Toggle Dropdown Profile
         function toggleUserDropdown() {
             let dropdown = document.getElementById('userDropdown');
             dropdown.classList.toggle('hidden');
         }
 
-        // Tutup dropdown jika klik di luar area
         window.addEventListener('click', function(e) {
             if (!e.target.closest('#userDropdown') && !e.target.closest('button[onclick="toggleUserDropdown()"]')) {
                 document.getElementById('userDropdown').classList.add('hidden');
             }
         });
 
-        // Simulasi Logout
-        // Langsung Logout & Redirect
-function logout() {
-    window.location.href = '/login';
-}
         function filterCategory(category) {
             activeCategory = category;
             ['Semua', 'Minuman', 'Makanan', 'Snack'].forEach(cat => {
@@ -282,15 +302,21 @@ function logout() {
             let html = '';
             filteredProducts.forEach((p) => {
                 let originalIndex = products.findIndex(prod => prod.name === p.name);
+                
+                // Sembunyikan button edit jika bukan admin
+                let editButton = isAdmin ? `
+                    <button onclick="openEditModal(${originalIndex})" class="absolute top-2 left-2 bg-white/90 hover:bg-white text-slate-700 p-1.5 rounded-lg shadow-sm transition cursor-pointer" title="Edit Menu">
+                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                    </button>
+                ` : '';
+
                 html += `
                     <div class="bg-white border border-slate-200 rounded-2xl p-3 flex flex-col justify-between hover:border-indigo-300 transition shadow-xs relative group">
                         <div>
                             <div class="relative h-28 bg-slate-100 rounded-xl overflow-hidden mb-3">
                                 <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover">
                                 <span class="absolute top-2 right-2 bg-slate-900/70 backdrop-blur-xs text-white text-[10px] px-2 py-0.5 rounded-md font-medium">Stok: ${p.stock}</span>
-                                <button onclick="openEditModal(${originalIndex})" class="absolute top-2 left-2 bg-white/90 hover:bg-white text-slate-700 p-1.5 rounded-lg shadow-sm transition cursor-pointer" title="Edit Menu">
-                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-                                </button>
+                                ${editButton}
                             </div>
                             <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">${p.category}</span>
                             <h4 class="font-bold text-slate-900 text-sm leading-snug mt-0.5">${p.name}</h4>
@@ -308,6 +334,7 @@ function logout() {
         document.getElementById('searchInput').addEventListener('input', renderProducts);
 
         function openEditModal(index) {
+            if (!isAdmin) return;
             document.getElementById('modalTitle').innerText = 'Edit Menu Produk';
             document.getElementById('editIndex').value = index;
             document.getElementById('inputName').value = products[index].name;
@@ -320,6 +347,7 @@ function logout() {
         }
 
         function openAddProductModal() {
+            if (!isAdmin) return;
             document.getElementById('modalTitle').innerText = 'Tambah Menu Baru';
             document.getElementById('editIndex').value = '';
             document.getElementById('inputName').value = '';
@@ -337,6 +365,7 @@ function logout() {
         }
 
         function saveProduct() {
+            if (!isAdmin) return;
             let index = document.getElementById('editIndex').value;
             let name = document.getElementById('inputName').value;
             let price = parseFloat(document.getElementById('inputPrice').value) || 0;
@@ -440,7 +469,7 @@ function logout() {
 
         function checkout() {
             if (cart.length === 0) {
-                alert('Keranjang masih kosong, wak!');
+                alert('Keranjang masih kosong!');
                 return;
             }
             alert('Transaksi berhasil diproses menggunakan metode ' + selectedPayment + '!');
