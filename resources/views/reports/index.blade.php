@@ -12,12 +12,12 @@
                 <span class="font-semibold text-slate-700">Rentang Tanggal:</span>
             </div>
 
-            <input type="date" name="start_date" value="{{ $startDate ?? '2026-09-01' }}" 
+            <input type="date" name="start_date" value="{{ $startDate }}"
                 class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             
             <span class="text-slate-400 font-normal">s/d</span>
 
-            <input type="date" name="end_date" value="{{ $endDate ?? '2026-09-23' }}" 
+            <input type="date" name="end_date" value="{{ $endDate }}"
                 class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
 
             <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-xl transition shadow-sm">
@@ -27,11 +27,8 @@
 
         <!-- Tombol Ekspor -->
         <div class="flex items-center gap-2.5">
-            <a href="#" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-2 transition">
-                <i class="fa-solid fa-file-excel text-sm"></i> Ekspor Excel (.xlsx)
-            </a>
-            <a href="#" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-2 transition">
-                <i class="fa-solid fa-file-pdf text-sm"></i> Ekspor PDF
+            <a href="{{ route('reports.export', ['start_date' => $startDate, 'end_date' => $endDate]) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-2 transition">
+                <i class="fa-solid fa-file-excel text-sm"></i> Ekspor CSV (Excel)
             </a>
         </div>
 
@@ -45,10 +42,10 @@
             <div>
                 <p class="text-xs font-semibold text-slate-400 mb-2">Total Omzet Penjualan</p>
                 <h3 class="text-2xl font-black text-slate-800 tracking-tight">
-                    Rp {{ number_format($totalOmzet ?? 18250000, 0, ',', '.') }}
+                    Rp {{ number_format($totalOmzet, 0, ',', '.') }}
                 </h3>
             </div>
-            <p class="text-xs text-slate-400 font-medium mt-3">{{ $totalTransaksi ?? 342 }} Transaksi Selesai</p>
+            <p class="text-xs text-slate-400 font-medium mt-3">{{ $totalTransaksi }} Transaksi Selesai</p>
         </div>
 
         <!-- Card 2: Total Laba Bersih -->
@@ -56,7 +53,7 @@
             <div>
                 <p class="text-xs font-semibold text-slate-400 mb-2">Total Laba Bersih</p>
                 <h3 class="text-2xl font-black text-emerald-600 tracking-tight">
-                    Rp {{ number_format($totalLaba ?? 6120000, 0, ',', '.') }}
+                    Rp {{ number_format($totalLaba, 0, ',', '.') }}
                 </h3>
             </div>
             <p class="text-xs text-slate-400 font-medium mt-3">Laba = Harga Jual - Modal</p>
@@ -67,10 +64,10 @@
             <div>
                 <p class="text-xs font-semibold text-slate-400 mb-2">Produk Terjual</p>
                 <h3 class="text-2xl font-black text-indigo-600 tracking-tight">
-                    {{ $produkTerjual ?? 512 }} Items
+                    {{ $produkTerjual }} Items
                 </h3>
             </div>
-            <p class="text-xs text-slate-400 font-medium mt-3">Dari 12 Kategori Produk</p>
+            <p class="text-xs text-slate-400 font-medium mt-3">Pada rentang tanggal terpilih</p>
         </div>
 
     </div>
@@ -86,9 +83,9 @@
             </div>
 
             @php
-                $valTunai = $tunai ?? 10950000;
-                $valQris  = $qris ?? 5475000;
-                $valBank  = $bank ?? 1825000;
+                $valTunai = $tunai ?? 0;
+                $valQris  = $qris ?? 0;
+                $valBank  = $bank ?? 0;
                 
                 $grandTotal = $valTunai + $valQris + $valBank;
                 $pctTunai   = $grandTotal > 0 ? round(($valTunai / $grandTotal) * 100) : 0;
@@ -162,30 +159,7 @@
                         </div>
                     @endforeach
                 @else
-                    <!-- Fallback Dummy Data jika data dari DB belum dikirim -->
-                    <div class="bg-slate-50/70 p-3.5 rounded-xl flex items-center justify-between">
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-800">Kopi Susu Gula Aren</h4>
-                            <p class="text-[11px] text-slate-400 font-medium mt-0.5">124 pcs terjual</p>
-                        </div>
-                        <span class="text-xs font-bold text-indigo-600">Rp 2.232.000</span>
-                    </div>
-
-                    <div class="bg-slate-50/70 p-3.5 rounded-xl flex items-center justify-between">
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-800">Nasi Goreng Spesial</h4>
-                            <p class="text-[11px] text-slate-400 font-medium mt-0.5">88 pcs terjual</p>
-                        </div>
-                        <span class="text-xs font-bold text-indigo-600">Rp 1.936.000</span>
-                    </div>
-
-                    <div class="bg-slate-50/70 p-3.5 rounded-xl flex items-center justify-between">
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-800">Es Teh Manis Jumbo</h4>
-                            <p class="text-[11px] text-slate-400 font-medium mt-0.5">76 pcs terjual</p>
-                        </div>
-                        <span class="text-xs font-bold text-indigo-600">Rp 380.000</span>
-                    </div>
+                    <p class="rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-400">Belum ada produk terjual pada rentang tanggal ini.</p>
                 @endif
             </div>
         </div>

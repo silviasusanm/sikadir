@@ -56,6 +56,12 @@
             </div>
         @endif
 
+        @if($errors->any())
+            <div class="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl mb-6 text-xs font-semibold">
+                {{ $errors->first() }}
+            </div>
+        @endif
+
         <!-- Grid Kartu Kategori -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             

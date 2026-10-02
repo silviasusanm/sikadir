@@ -2,83 +2,104 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\Category;
+use App\Models\Product;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    /**
-     * Menampilkan daftar semua produk.
-     */
-    public function index()
-{
-    $products = Product::with('category')->get();
-
-    $categories = Category::all();
-
-    return view('products.index', compact('products', 'categories'));
-}
-
-    /**
-     * Menyimpan produk baru ke database.
-     */
-    public function store(Request $request)
+    public function index(): View
     {
-        $validated = $request->validate([
-            'name'          => 'required|string|max:255',
-            'price'          => 'nullable|numeric|min:0',
-            'selling_price' => 'nullable|numeric|min:0',
-            'stock'          => 'required|integer|min:0',
-            'barcode'        => 'nullable|string|max:255',
+        return view('products.index', [
+            'products' => Product::with('category')->latest()->get(),
+            'categories' => Category::orderBy('name')->get(),
         ]);
-
-        // Ambil nilai harga baik dari input name="price" maupun "selling_price"
-        $sellingPrice = $request->input('price', $request->input('selling_price', 0));
-
-        Product::create([
-            'name'          => $validated['name'],
-            'selling_price' => $sellingPrice,
-            'stock'         => $validated['stock'],
-            'barcode'       => $validated['barcode'] ?? null,
-        ]);
-
-        return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan!');
     }
 
-    /**
-     * Memperbarui data produk yang ada.
-     */
-    public function update(Request $request, Product $product)
+    public function create(): View
     {
-        $validated = $request->validate([
-            'name'          => 'required|string|max:255',
-            'price'          => 'nullable|numeric|min:0',
-            'selling_price' => 'nullable|numeric|min:0',
-            'stock'          => 'required|integer|min:0',
-            'barcode'        => 'nullable|string|max:255',
+        return view('products.create', [
+            'categories' => Category::orderBy('name')->get(),
         ]);
-
-        // Ambil nilai harga dari input form
-        $sellingPrice = $request->input('price', $request->input('selling_price', $product->selling_price));
-
-        $product->update([
-            'name'          => $validated['name'],
-            'selling_price' => $sellingPrice,
-            'stock'         => $validated['stock'],
-            'barcode'       => $validated['barcode'] ?? $product->barcode,
-        ]);
-
-        return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui!');
     }
 
-    /**
-     * Menghapus produk dari database.
-     */
-    public function destroy(Product $product)
+    public function store(Request $request): RedirectResponse
     {
+        $this->normalizeFormInput($request);
+        $validated = $request->validate($this->rules());
+
+        Product::create($validated);
+
+        return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan.');
+    }
+
+    public function edit(Product $product): View
+    {
+        return view('products.edit', [
+            'product' => $product,
+            'categories' => Category::orderBy('name')->get(),
+        ]);
+    }
+
+    public function update(Request $request, Product $product): RedirectResponse
+    {
+        $this->normalizeFormInput($request);
+        $validated = $request->validate($this->rules($product));
+
+        $product->update($validated);
+
+        return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui.');
+    }
+
+    public function destroy(Product $product): RedirectResponse
+    {
+        if ($product->transactionDetails()->exists()) {
+            return redirect()->route('products.index')
+                ->withErrors(['product' => 'Produk yang sudah tercatat dalam transaksi tidak dapat dihapus.']);
+        }
+
         $product->delete();
 
-        return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus!');
+        return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus.');
+    }
+
+    /**
+     * Accept the field names used by the existing product forms.
+     */
+    private function normalizeFormInput(Request $request): void
+    {
+        $request->merge([
+            'barcode' => $request->input('barcode', $request->input('code')),
+            'cost_price' => $request->input('cost_price', $request->input('buy_price')),
+            'selling_price' => $request->input(
+                'selling_price',
+                $request->input('sell_price', $request->input('price'))
+            ),
+            'category_id' => $request->input('category_id', $request->input('category')),
+        ]);
+    }
+
+    /**
+     * @return array<string, array<int, mixed>>
+     */
+    private function rules(?Product $product = null): array
+    {
+        return [
+            'barcode' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('products', 'barcode')->ignore($product?->id),
+            ],
+            'name' => ['required', 'string', 'max:255'],
+            'category_id' => ['required', 'integer', 'exists:categories,id'],
+            'cost_price' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
+            'selling_price' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
+            'stock' => ['required', 'integer', 'min:0'],
+            'min_stock' => ['required', 'integer', 'min:0'],
+        ];
     }
 }

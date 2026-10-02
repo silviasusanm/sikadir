@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
@@ -38,10 +40,20 @@ class Product extends Model
      * @var array
      */
     protected $casts = [
-        'cost_price'    => 'float',
+        'cost_price' => 'float',
         'selling_price' => 'float',
-        'price'         => 'float',
-        'stock'         => 'integer',
-        'min_stock'     => 'integer',
+        'price' => 'float',
+        'stock' => 'integer',
+        'min_stock' => 'integer',
     ];
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function transactionDetails(): HasMany
+    {
+        return $this->hasMany(TransactionDetail::class);
+    }
 }

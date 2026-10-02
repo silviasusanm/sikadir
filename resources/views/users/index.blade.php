@@ -58,20 +58,27 @@
             </div>
 
 
-            <button
-                type="button"
+            <a
+                href="{{ route('users.create') }}"
                 class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-2 transition">
 
                 <i class="fa-solid fa-plus"></i>
 
                 Tambah Pengguna
 
-            </button>
+            </a>
 
         </div>
 
 
-        <!-- Tabel -->
+            @if(session('success'))
+                <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">{{ session('success') }}</div>
+            @endif
+            @if($errors->any())
+                <div class="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{{ $errors->first() }}</div>
+            @endif
+
+            <!-- Tabel -->
         <div class="overflow-x-auto">
 
             <table class="w-full text-left border-collapse text-xs">
@@ -94,10 +101,6 @@
 
                         <th class="py-3.5 px-4">
                             Role
-                        </th>
-
-                        <th class="py-3.5 px-4 text-center">
-                            Status
                         </th>
 
                         <th class="py-3.5 px-4 text-center">
@@ -145,39 +148,28 @@
                             </td>
 
 
-                            <td class="py-3.5 px-4 text-center">
-
-                                <span class="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-md text-[11px] font-semibold">
-
-                                    Aktif
-
-                                </span>
-
-                            </td>
-
-
                             <td class="py-3.5 px-4">
 
                                 <div class="flex items-center justify-center gap-2">
 
-                                    <button
-                                        type="button"
+                                    <a
+                                        href="{{ route('users.edit', $user) }}"
                                         class="text-indigo-600 hover:text-indigo-800 p-1.5 transition"
                                         title="Edit">
 
                                         <i class="fa-regular fa-pen-to-square text-sm"></i>
 
-                                    </button>
+                                    </a>
 
 
-                                    <button
-                                        type="button"
-                                        class="text-rose-500 hover:text-rose-700 p-1.5 transition"
-                                        title="Hapus">
+                                    <form action="{{ route('users.destroy', $user) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-rose-500 hover:text-rose-700 p-1.5 transition" title="Hapus">
+                                            <i class="fa-regular fa-trash-can text-sm"></i>
+                                        </button>
+                                    </form>
 
-                                        <i class="fa-regular fa-trash-can text-sm"></i>
-
-                                    </button>
 
                                 </div>
 
@@ -189,7 +181,7 @@
 
                         <tr>
 
-                            <td colspan="6" class="text-center py-12 text-slate-400">
+                            <td colspan="5" class="text-center py-12 text-slate-400">
 
                                 <i class="fa-solid fa-users text-3xl mb-2 text-slate-300 block"></i>
 

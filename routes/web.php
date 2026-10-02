@@ -1,10 +1,13 @@
 <?php
 
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PosController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
-use App\Models\Category;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,101 +21,34 @@ Route::redirect('/', '/login');
 // AUTENTIKASI
 // ==========================================
 
-Route::view('/login', 'auth.login')->name('login');
-
-Route::post('/login', function (Request $request) {
-    $credentials = $request->validate([
-        'email' => ['required', 'email'],
-        'password' => ['required'],
-    ]);
-
-    if (Auth::attempt($credentials, $request->boolean('remember'))) {
-        $request->session()->regenerate();
-
-        if (auth()->user()->role === 'admin') {
-            return redirect()->intended('/dashboard');
-        }
-
-        return redirect()->intended('/pos');
-    }
-
-    return back()->withErrors([
-        'email' => 'Email atau password salah, wak!',
-    ])->onlyInput('email');
-})->name('login.post');
-
-
-Route::post('/logout', function (Request $request) {
-    Auth::logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
-
-    return redirect('/login');
-})->name('logout');
-
-
-Route::view('/profile', 'profile.edit')->name('profile.edit')->middleware('auth');
-
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
 // ==========================================
 // KASIR & ADMIN (POS)
 // ==========================================
 
 Route::middleware(['auth'])->group(function () {
-    Route::view('/pos', 'pos.index')->name('pos');
+    Route::get('/pos', [PosController::class, 'index'])->name('pos');
+    Route::post('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
 });
-
 
 // ==========================================
 // KHUSUS ADMIN
 // ==========================================
 
-Route::middleware(['auth'])->group(function () {
-
-    Route::view('/dashboard', 'dashboard')->name('dashboard');
-
-    Route::get('/products', function () {
-        $products = [];
-        return view('products.index', compact('products'));
-    })->name('products.index');
-
-    Route::get('/products/create', function () {
-        $categories = Category::all();
-        return view('products.create', compact('categories'));
-    })->name('products.create');
-
-    Route::post('/products', function (Request $request) {
-        return redirect()
-            ->route('products.index')
-            ->with('success', 'Produk berhasil ditambahkan!');
-    })->name('products.store');
-
-    Route::get('/products/{id}/edit', function ($id) {
-        return view('products.edit', compact('id'));
-    })->name('products.edit');
-
-    Route::put('/products/{id}', function (Request $request, $id) {
-        return redirect()
-            ->route('products.index')
-            ->with('success', 'Produk berhasil diperbarui!');
-    })->name('products.update');
-
-    Route::delete('/products/{id}', function ($id) {
-        return redirect()
-            ->route('products.index')
-            ->with('success', 'Produk berhasil dihapus!');
-    })->name('products.destroy');
-
-    Route::get('/categories', function () {
-        $categories = Category::all();
-        return view('categories.index', compact('categories'));
-    })->name('categories.index');
-
-    Route::get('/users', function () {
-        $users = User::all();
-        return view('users.index', compact('users'));
-    })->name('users.index');
-
-    Route::view('/reports', 'reports.index')->name('reports.index');
-
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::resource('products', ProductController::class)->only([
+        'index', 'create', 'store', 'edit', 'update', 'destroy',
+    ]);
+    Route::resource('categories', CategoryController::class)->except(['show']);
+    Route::resource('users', UserController::class)->except(['show']);
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
 });
+
+require __DIR__.'/auth.php';

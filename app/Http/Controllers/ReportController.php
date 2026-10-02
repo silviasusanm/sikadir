@@ -2,96 +2,126 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use Carbon\Carbon;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
-        $startDate = $request->input('start_date', Carbon::today()->toDateString());
-        $endDate   = $request->input('end_date', Carbon::today()->toDateString());
+        ['startDate' => $startDate, 'endDate' => $endDate, 'start' => $start, 'end' => $end] = $this->dateRange($request);
 
-        // 1. Deteksi Kolom Total di Tabel transactions
-        $amountColumn = null;
-        foreach (['total_price', 'grand_total', 'total_amount', 'total_bayar', 'total'] as $col) {
-            if (Schema::hasColumn('transactions', $col)) {
-                $amountColumn = $col;
-                break;
+        $transactions = Transaction::query()->whereBetween('created_at', [$start, $end]);
+        $transactionIds = (clone $transactions)->select('id');
+        $details = TransactionDetail::query()
+            ->whereIn('transaction_id', $transactionIds)
+            ->with('product');
+
+        $paymentMethods = (clone $transactions)
+            ->select('payment_method', DB::raw('SUM(total_amount) as total'))
+            ->groupBy('payment_method')
+            ->pluck('total', 'payment_method');
+
+        $topProducts = (clone $details)
+            ->select(
+                'product_id',
+                DB::raw('SUM(quantity) as total_qty'),
+                DB::raw('SUM(subtotal) as total_revenue')
+            )
+            ->groupBy('product_id')
+            ->orderByDesc('total_qty')
+            ->limit(3)
+            ->get();
+
+        $totalLaba = (clone $details)
+            ->sum(DB::raw('subtotal - (cost_price * quantity)'));
+
+        return view('reports.index', [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'totalOmzet' => (clone $transactions)->sum('total_amount'),
+            'totalTransaksi' => (clone $transactions)->count(),
+            'totalLaba' => $totalLaba,
+            'produkTerjual' => (clone $details)->sum('quantity'),
+            'tunai' => $paymentMethods['cash'] ?? 0,
+            'qris' => $paymentMethods['qris'] ?? 0,
+            'bank' => $paymentMethods['transfer'] ?? 0,
+            'topProducts' => $topProducts,
+        ]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        ['startDate' => $startDate, 'endDate' => $endDate, 'start' => $start, 'end' => $end] = $this->dateRange($request);
+
+        return response()->streamDownload(function () use ($start, $end): void {
+            $file = fopen('php://output', 'w');
+
+            if ($file === false) {
+                throw new \RuntimeException('Gagal membuka aliran ekspor laporan.');
             }
-        }
 
-        $transactionsQuery = Transaction::whereBetween(DB::raw('DATE(created_at)'), [$startDate, $endDate]);
+            fwrite($file, "\xEF\xBB\xBF");
+            fputcsv($file, [
+                'ID Transaksi', 'Tanggal', 'Kasir', 'Metode Pembayaran', 'Produk', 'Barcode',
+                'Jumlah', 'Harga Jual', 'Harga Modal', 'Subtotal Bersih',
+            ], ',', '"', '');
 
-        $totalOmzet     = $amountColumn ? (clone $transactionsQuery)->sum($amountColumn) : 0;
-        $totalTransaksi = (clone $transactionsQuery)->count();
-
-        // 2. Rekap Metode Pembayaran
-        $paymentMethods = collect();
-        if ($amountColumn && Schema::hasColumn('transactions', 'payment_method')) {
-            $paymentMethods = (clone $transactionsQuery)
-                ->select('payment_method', DB::raw("SUM({$amountColumn}) as total"))
-                ->groupBy('payment_method')
-                ->pluck('total', 'payment_method');
-        }
-
-        $tunai = $paymentMethods['cash'] ?? $paymentMethods['tunai'] ?? 0;
-        $qris  = $paymentMethods['qris'] ?? 0;
-        $bank  = $paymentMethods['bank'] ?? $paymentMethods['transfer'] ?? 0;
-
-        $produkTerjual = 0;
-        $totalLaba     = 0;
-        $topProducts   = collect();
-
-        // 3. Deteksi apakah ada tabel detail transaksi
-        $detailModel = new TransactionDetail();
-        $detailTable = $detailModel->getTable();
-
-        if (Schema::hasTable($detailTable)) {
-            $transactionIds = (clone $transactionsQuery)->pluck('id');
-
-            $details = TransactionDetail::whereIn('transaction_id', $transactionIds)
-                ->with('product')
-                ->get();
-
-            $produkTerjual = $details->sum('quantity');
-
-            if ($totalOmzet == 0 && $details->isNotEmpty()) {
-                $totalOmzet = $details->sum(function ($item) {
-                    return $item->subtotal ?? (($item->price ?? 0) * ($item->quantity ?? 0));
+            TransactionDetail::query()
+                ->with(['product', 'transaction.user'])
+                ->whereHas('transaction', fn ($query) => $query->whereBetween('created_at', [$start, $end]))
+                ->orderBy('id')
+                ->chunkById(500, function ($details) use ($file): void {
+                    foreach ($details as $detail) {
+                        fputcsv($file, [
+                            $this->safeSpreadsheetText($detail->transaction->transaction_number ?? ''),
+                            $detail->transaction->created_at->format('Y-m-d H:i:s'),
+                            $this->safeSpreadsheetText($detail->transaction->user?->name ?? 'Kasir'),
+                            $this->safeSpreadsheetText($detail->transaction->payment_method),
+                            $this->safeSpreadsheetText($detail->product?->name ?? 'Produk dihapus'),
+                            $this->safeSpreadsheetText($detail->product?->barcode ?? ''),
+                            $detail->quantity,
+                            $detail->price,
+                            $detail->cost_price,
+                            $detail->subtotal,
+                        ], ',', '"', '');
+                    }
                 });
-            }
 
-            $totalLaba = $details->sum(function ($item) {
-                $itemPrice = $item->price ?? 0;
-                $costPrice = $item->product->cost_price ?? ($itemPrice * 0.7);
-                return ($itemPrice - $costPrice) * ($item->quantity ?? 0);
-            });
+            fclose($file);
+        }, "sikadir-laporan-{$startDate}-{$endDate}.csv", [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
 
-            $topProducts = TransactionDetail::whereIn('transaction_id', $transactionIds)
-                ->select('product_id', DB::raw('SUM(quantity) as total_qty'))
-                ->groupBy('product_id')
-                ->orderByDesc('total_qty')
-                ->take(3)
-                ->with('product')
-                ->get();
-        }
+    /**
+     * @return array{startDate: string, endDate: string, start: Carbon, end: Carbon}
+     */
+    private function dateRange(Request $request): array
+    {
+        $dates = $request->validate([
+            'start_date' => ['nullable', 'date_format:Y-m-d'],
+            'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
+        ]);
 
-        return view('reports.index', compact(
-            'startDate',
-            'endDate',
-            'totalOmzet',
-            'totalTransaksi',
-            'totalLaba',
-            'produkTerjual',
-            'tunai',
-            'qris',
-            'bank',
-            'topProducts'
-        ));
+        $startDate = $dates['start_date'] ?? Carbon::today()->toDateString();
+        $endDate = $dates['end_date'] ?? Carbon::today()->toDateString();
+
+        return [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'start' => Carbon::parse($startDate)->startOfDay(),
+            'end' => Carbon::parse($endDate)->endOfDay(),
+        ];
+    }
+
+    private function safeSpreadsheetText(string $value): string
+    {
+        return preg_match('/^[=+\-@\t\r]/', $value) === 1 ? "'".$value : $value;
     }
 }

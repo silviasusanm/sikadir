@@ -3,38 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class CategoryController extends Controller
 {
     /**
      * Tampilkan daftar kategori
      */
-    public function index()
+    public function index(): View
     {
         $categories = Category::withCount('products')->latest()->get();
+
         return view('categories.index', compact('categories'));
     }
 
     /**
      * Tampilkan form tambah kategori
      */
-    public function create()
+    public function create(): View
     {
-        return view('categories.create');
+        return view('categories.create', ['category' => new Category]);
     }
 
     /**
      * Simpan kategori baru
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
         ]);
 
-        Category::create($request->only('name', 'description'));
+        Category::create($validated);
 
         return redirect()->route('categories.index')
             ->with('success', 'Kategori berhasil ditambahkan.');
@@ -43,22 +45,21 @@ class CategoryController extends Controller
     /**
      * Tampilkan form edit kategori
      */
-    public function edit(Category $category)
+    public function edit(Category $category): View
     {
-        return view('categories.edit', compact('category'));
+        return view('categories.create', compact('category'));
     }
 
     /**
      * Update data kategori
      */
-    public function update(Request $request, Category $category)
+    public function update(Request $request, Category $category): RedirectResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
         ]);
 
-        $category->update($request->only('name', 'description'));
+        $category->update($validated);
 
         return redirect()->route('categories.index')
             ->with('success', 'Kategori berhasil diperbarui.');
@@ -67,8 +68,13 @@ class CategoryController extends Controller
     /**
      * Hapus kategori
      */
-    public function destroy(Category $category)
+    public function destroy(Category $category): RedirectResponse
     {
+        if ($category->products()->exists()) {
+            return redirect()->route('categories.index')
+                ->withErrors(['category' => 'Kategori yang masih memiliki produk tidak dapat dihapus.']);
+        }
+
         $category->delete();
 
         return redirect()->route('categories.index')

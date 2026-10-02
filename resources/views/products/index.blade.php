@@ -70,6 +70,12 @@
 
         @endif
 
+        @if($errors->any())
+            <div class="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl mb-6 text-xs font-semibold">
+                {{ $errors->first() }}
+            </div>
+        @endif
+
 
         {{-- TABEL --}}
         <div class="overflow-x-auto">
@@ -124,7 +130,7 @@
                         <tr class="hover:bg-slate-50/50 transition">
 
                             <td class="py-3.5 px-4 font-bold text-slate-800">
-                                {{ $product->code ?? 'BRG-00' . $product->id }}
+                                {{ $product->barcode }}
                             </td>
 
 
@@ -147,7 +153,7 @@
                             <td class="py-3.5 px-4">
 
                                 Rp
-                                {{ number_format($product->cost_price ?? $product->price * 0.7, 0, ',', '.') }}
+                                {{ number_format($product->cost_price, 0, ',', '.') }}
 
                             </td>
 
@@ -155,7 +161,7 @@
                             <td class="py-3.5 px-4 font-bold text-indigo-600">
 
                                 Rp
-                                {{ number_format($product->price, 0, ',', '.') }}
+                                {{ number_format($product->selling_price, 0, ',', '.') }}
 
                             </td>
 
@@ -297,8 +303,10 @@
 
                     <input
                         type="text"
-                        name="code"
+                        name="barcode"
+                        value="{{ old('barcode') }}"
                         placeholder="misal: BRG-008"
+                        required
                         class="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none"
                     >
 
@@ -315,6 +323,7 @@
                     <input
                         type="text"
                         name="name"
+                        value="{{ old('name') }}"
                         placeholder="Nama lengkap barang"
                         required
                         class="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none"
@@ -324,7 +333,7 @@
 
 
                 {{-- KATEGORI + URL GAMBAR --}}
-                <div class="grid grid-cols-2 gap-2.5 mb-4">
+                <div class="mb-4">
 
 
                     {{-- KATEGORI --}}
@@ -344,40 +353,11 @@
                                 Pilih Kategori
                             </option>
 
-                            <option value="1">
-                                Makanan
-                            </option>
-
-                            <option value="2">
-                                Minuman
-                            </option>
-
-                            <option value="3">
-                                Snack
-                            </option>
-
-                            <option value="4">
-                                ATK / Lainnya
-                            </option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
+                            @endforeach
 
                         </select>
-
-                    </div>
-
-
-                    {{-- URL GAMBAR --}}
-                    <div>
-
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">
-                            URL Gambar (Opsional)
-                        </label>
-
-                        <input
-                            type="url"
-                            name="image_url"
-                            placeholder="https://..."
-                            class="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none"
-                        >
 
                     </div>
 
@@ -398,7 +378,7 @@
                         <input
                             type="number"
                             name="cost_price"
-                            value="0"
+                            value="{{ old('cost_price', 0) }}"
                             min="0"
                             required
                             class="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none"
@@ -417,7 +397,7 @@
                         <input
                             type="number"
                             name="price"
-                            value="0"
+                            value="{{ old('price', 0) }}"
                             min="0"
                             required
                             class="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none"
@@ -442,7 +422,7 @@
                         <input
                             type="number"
                             name="stock"
-                            value="0"
+                            value="{{ old('stock', 0) }}"
                             min="0"
                             required
                             class="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none"
@@ -461,7 +441,7 @@
                         <input
                             type="number"
                             name="min_stock"
-                            value="5"
+                            value="{{ old('min_stock', 5) }}"
                             min="0"
                             required
                             class="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none"
@@ -559,6 +539,10 @@
             }
 
         });
+
+        @if($errors->any() && old('barcode'))
+            openProductModal();
+        @endif
 
     </script>
 

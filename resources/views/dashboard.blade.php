@@ -99,10 +99,10 @@
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex justify-between items-center transition hover:shadow-md">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">OMZET HARI INI</p>
-                    <h3 class="text-2xl font-bold text-gray-800 mt-1">Rp 2.450.000</h3>
+                    <h3 class="text-2xl font-bold text-gray-800 mt-1">Rp {{ number_format($totalOmzet, 0, ',', '.') }}</h3>
                     <div class="flex items-center text-xs font-medium text-emerald-600 mt-2">
                         <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i>
-                        <span>+14% dibanding kemarin</span>
+                        <span>Omzet hari ini</span>
                     </div>
                 </div>
                 <div class="bg-emerald-50 text-emerald-600 p-3.5 rounded-2xl flex items-center justify-center">
@@ -113,10 +113,10 @@
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex justify-between items-center transition hover:shadow-md">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">TOTAL TRANSAKSI</p>
-                    <h3 class="text-2xl font-bold text-gray-800 mt-1">48 Penjualan</h3>
+                    <h3 class="text-2xl font-bold text-gray-800 mt-1">{{ number_format($totalTransaksi) }} Penjualan</h3>
                     <div class="flex items-center text-xs font-medium text-indigo-500 mt-2">
                         <i data-lucide="receipt" class="w-4 h-4 mr-1"></i>
-                        <span>Rata-rata Rp 51.000/trx</span>
+                        <span>Rata-rata Rp {{ number_format($rataRataTransaksi, 0, ',', '.') }}/trx</span>
                     </div>
                 </div>
                 <div class="bg-indigo-50 text-indigo-600 p-3.5 rounded-2xl flex items-center justify-center">
@@ -127,10 +127,10 @@
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex justify-between items-center transition hover:shadow-md">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">LABA BERSIH</p>
-                    <h3 class="text-2xl font-bold text-gray-800 mt-1">Rp 820.000</h3>
+                    <h3 class="text-2xl font-bold text-gray-800 mt-1">Rp {{ number_format($totalLaba, 0, ',', '.') }}</h3>
                     <div class="flex items-center text-xs font-medium text-emerald-600 mt-2">
                         <i data-lucide="percent" class="w-4 h-4 mr-1 stroke-[2.5]"></i>
-                        <span>Margin 33.4%</span>
+                        <span>Laba kotor hari ini</span>
                     </div>
                 </div>
                 <div class="bg-blue-50 text-blue-600 p-3.5 rounded-2xl flex items-center justify-center">
@@ -141,7 +141,7 @@
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex justify-between items-center transition hover:shadow-md">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">STOK MENIPIS</p>
-                    <h3 class="text-2xl font-bold text-amber-600 mt-1">3 Produk</h3>
+                    <h3 class="text-2xl font-bold text-amber-600 mt-1">{{ $lowStockProducts->count() }} Produk</h3>
                     <div class="flex items-center text-xs font-medium text-amber-600 mt-2">
                         <i data-lucide="alert-triangle" class="w-4 h-4 mr-1"></i>
                         <span>Perlu Restock Segera</span>
@@ -176,42 +176,20 @@
                                     <th class="p-3">Kasir</th>
                                     <th class="p-3">Metode</th>
                                     <th class="p-3">Total</th>
-                                    <th class="p-3 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 text-sm">
-                                <tr class="hover:bg-gray-50/50 transition">
-                                    <td class="p-3 font-semibold text-indigo-600">TRX-20260923-001</td>
-                                    <td class="p-3 text-gray-500">14:20 WIB</td>
-                                    <td class="p-3 font-medium text-gray-700">Budi Kasir</td>
-                                    <td class="p-3"><span class="px-2.5 py-1 text-xs font-medium bg-emerald-100 text-emerald-700 rounded-full">Tunai</span></td>
-                                    <td class="p-3 font-bold text-gray-800">Rp 45.000</td>
-                                    <td class="p-3 text-center"><button class="text-gray-400 hover:text-gray-600"><i data-lucide="printer" class="w-4 h-4 mx-auto"></i></button></td>
-                                </tr>
-                                <tr class="hover:bg-gray-50/50 transition">
-                                    <td class="p-3 font-semibold text-indigo-600">TRX-20260923-002</td>
-                                    <td class="p-3 text-gray-500">13:50 WIB</td>
-                                    <td class="p-3 font-medium text-gray-700">Siti Kasir</td>
-                                    <td class="p-3"><span class="px-2.5 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-full">QRIS</span></td>
-                                    <td class="p-3 font-bold text-gray-800">Rp 78.000</td>
-                                    <td class="p-3 text-center"><button class="text-gray-400 hover:text-gray-600"><i data-lucide="printer" class="w-4 h-4 mx-auto"></i></button></td>
-                                </tr>
-                                <tr class="hover:bg-gray-50/50 transition">
-                                    <td class="p-3 font-semibold text-indigo-600">TRX-20260923-003</td>
-                                    <td class="p-3 text-gray-500">12:15 WIB</td>
-                                    <td class="p-3 font-medium text-gray-700">Budi Kasir</td>
-                                    <td class="p-3"><span class="px-2.5 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">Transfer</span></td>
-                                    <td class="p-3 font-bold text-gray-800">Rp 120.000</td>
-                                    <td class="p-3 text-center"><button class="text-gray-400 hover:text-gray-600"><i data-lucide="printer" class="w-4 h-4 mx-auto"></i></button></td>
-                                </tr>
-                                <tr class="hover:bg-gray-50/50 transition">
-                                    <td class="p-3 font-semibold text-indigo-600">TRX-20260923-004</td>
-                                    <td class="p-3 text-gray-500">11:05 WIB</td>
-                                    <td class="p-3 font-medium text-gray-700">Siti Kasir</td>
-                                    <td class="p-3"><span class="px-2.5 py-1 text-xs font-medium bg-emerald-100 text-emerald-700 rounded-full">Tunai</span></td>
-                                    <td class="p-3 font-bold text-gray-800">Rp 32.000</td>
-                                    <td class="p-3 text-center"><button class="text-gray-400 hover:text-gray-600"><i data-lucide="printer" class="w-4 h-4 mx-auto"></i></button></td>
-                                </tr>
+                                @forelse($recentTransactions as $transaction)
+                                    <tr class="hover:bg-gray-50/50 transition">
+                                        <td class="p-3 font-semibold text-indigo-600">{{ $transaction->transaction_number ?? 'TRX-' . $transaction->id }}</td>
+                                        <td class="p-3 text-gray-500">{{ $transaction->created_at->format('H:i') }}</td>
+                                        <td class="p-3 font-medium text-gray-700">{{ $transaction->user?->name ?? 'Kasir' }}</td>
+                                        <td class="p-3"><span class="px-2.5 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 rounded-full">{{ ['cash' => 'Tunai', 'qris' => 'QRIS', 'transfer' => 'Transfer'][$transaction->payment_method] ?? $transaction->payment_method }}</span></td>
+                                        <td class="p-3 font-bold text-gray-800">Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="5" class="p-8 text-center text-sm text-gray-400">Belum ada transaksi.</td></tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -226,27 +204,17 @@
                     </div>
 
                     <div class="space-y-3">
-                        <div class="p-3.5 bg-amber-50 rounded-xl border border-amber-100 flex justify-between items-center">
-                            <div>
-                                <h4 class="font-semibold text-gray-800 text-sm">Keripik Singkong Pedas</h4>
-                                <p class="text-xs text-amber-700 mt-0.5">Sisa: <strong class="font-bold text-sm">3</strong> (Min: 10)</p>
+                        @forelse($lowStockProducts as $product)
+                            <div class="p-3.5 bg-amber-50 rounded-xl border border-amber-100 flex justify-between items-center gap-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 text-sm">{{ $product->name }}</h4>
+                                    <p class="text-xs text-amber-700 mt-0.5">Sisa: <strong class="font-bold text-sm">{{ $product->stock }}</strong> (Min: {{ $product->min_stock }})</p>
+                                </div>
+                                <a href="{{ route('products.edit', $product) }}" class="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-semibold hover:bg-amber-600 transition shadow-sm whitespace-nowrap">Tambah Stok</a>
                             </div>
-                            <a href="{{ route('products.index') }}" class="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-semibold hover:bg-amber-600 transition shadow-sm">Tambah Stok</a>
-                        </div>
-                        <div class="p-3.5 bg-amber-50 rounded-xl border border-amber-100 flex justify-between items-center">
-                            <div>
-                                <h4 class="font-semibold text-gray-800 text-sm">Roti Bakar Cokelat</h4>
-                                <p class="text-xs text-amber-700 mt-0.5">Sisa: <strong class="font-bold text-sm">2</strong> (Min: 5)</p>
-                            </div>
-                            <a href="{{ route('products.index') }}" class="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-semibold hover:bg-amber-600 transition shadow-sm">Tambah Stok</a>
-                        </div>
-                        <div class="p-3.5 bg-amber-50 rounded-xl border border-amber-100 flex justify-between items-center">
-                            <div>
-                                <h4 class="font-semibold text-gray-800 text-sm">Air Mineral 600ml</h4>
-                                <p class="text-xs text-amber-700 mt-0.5">Sisa: <strong class="font-bold text-sm">4</strong> (Min: 12)</p>
-                            </div>
-                            <a href="{{ route('products.index') }}" class="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-semibold hover:bg-amber-600 transition shadow-sm">Tambah Stok</a>
-                        </div>
+                        @empty
+                            <p class="rounded-xl bg-emerald-50 p-4 text-center text-sm text-emerald-700">Semua stok produk mencukupi.</p>
+                        @endforelse
                     </div>
                 </div>
 

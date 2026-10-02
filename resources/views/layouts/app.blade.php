@@ -55,12 +55,12 @@
                 <!-- Role Mode Switcher -->
                 <div class="bg-[#1F1F68]/60 p-1 rounded-xl flex items-center text-xs font-medium border border-indigo-400/20">
                     <span class="text-indigo-200 px-3 py-1 text-[11px]">Role Mode:</span>
-                    <button type="button" class="bg-[#4F46E5] text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-semibold shadow-sm">
+                    <a href="{{ route('dashboard') }}" class="bg-[#4F46E5] text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-semibold shadow-sm">
                         <i class="fa-regular fa-circle-check text-xs"></i> Admin / Pemilik
-                    </button>
-                    <button type="button" class="text-indigo-200 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors">
+                    </a>
+                    <a href="{{ route('pos') }}" class="text-indigo-200 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors">
                         <i class="fa-solid fa-user-gear text-xs"></i> Kasir
-                    </button>
+                    </a>
                 </div>
 
                 <!-- User Dropdown Profile -->
