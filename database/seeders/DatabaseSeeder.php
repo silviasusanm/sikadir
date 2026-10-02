@@ -16,27 +16,31 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. Buat User Admin (Pemilik Toko)
-        User::create([
-            'name' => 'Pemilik Toko',
-            'email' => 'admin@sikadir.com',
-            'password' => Hash::make('password123'),
-            'role' => 'admin',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'admin@sikadir.com'],
+            [
+                'name' => 'Pemilik Toko',
+                'password' => Hash::make('password123'),
+                'role' => 'admin',
+            ]
+        );
 
         // 2. Buat User Kasir
-        User::create([
-            'name' => 'Budi Kasir',
-            'email' => 'kasir@sikadir.com',
-            'password' => Hash::make('password123'),
-            'role' => 'kasir',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'kasir@sikadir.com'],
+            [
+                'name' => 'Budi Kasir',
+                'password' => Hash::make('password123'),
+                'role' => 'kasir',
+            ]
+        );
 
         // 3. Buat Kategori Contoh
         $makanan = Category::create(['name' => 'Makanan']);
         $minuman = Category::create(['name' => 'Minuman']);
         $snack   = Category::create(['name' => 'Snack']);
 
-        // 4. Buat Produk Contoh untuk Layar Kasir
+        // 4. Buat Produk Contoh
         Product::create([
             'barcode' => '899123456701',
             'name' => 'Nasi Goreng Spesial',
@@ -63,7 +67,7 @@ class DatabaseSeeder extends Seeder
             'category_id' => $snack->id,
             'cost_price' => 6000,
             'selling_price' => 10000,
-            'stock' => 3, // Menguji warning stok menipis
+            'stock' => 3,
             'min_stock' => 5
         ]);
     }
