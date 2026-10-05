@@ -94,7 +94,12 @@
     <!-- KONTEN UTAMA POS -->
     <main class="max-w-7xl mx-auto px-4 py-6">
         @if(session('success'))
-            <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">{{ session('success') }}</div>
+            <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 flex items-center justify-between gap-3">
+                <span>{{ session('success') }}</span>
+                @if(session('receipt_id'))
+                    <a href="{{ route('pos.receipt', session('receipt_id')) }}" target="_blank" class="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Cetak Struk</a>
+                @endif
+            </div>
         @endif
         @if($errors->any())
             <div class="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{{ $errors->first() }}</div>
@@ -161,17 +166,42 @@
 
                     <div>
                         <span class="block text-xs text-slate-500 font-medium mb-1.5">Metode Pembayaran:</span>
-                        <div class="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium text-center">
+                        <div class="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium text-center">
                             <button type="button" onclick="setPaymentMethod('cash')" id="btnTunai" class="py-1.5 bg-white text-indigo-600 rounded-lg shadow-xs font-semibold cursor-pointer transition">Tunai</button>
                             <button type="button" onclick="setPaymentMethod('qris')" id="btnQris" class="py-1.5 text-slate-600 hover:text-slate-900 cursor-pointer transition">QRIS</button>
-                            <button type="button" onclick="setPaymentMethod('transfer')" id="btnTransfer" class="py-1.5 text-slate-600 hover:text-slate-900 cursor-pointer transition">Transfer</button>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between text-xs">
+                    <div id="cashPaymentFields" class="flex items-center justify-between text-xs">
                         <span class="text-slate-500 font-medium">Uang Diterima:</span>
                         <input type="number" id="cashInput" placeholder="0" min="0" step="0.01" oninput="calculateTotal()" class="w-32 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-right text-xs focus:outline-none focus:border-indigo-600">
                     </div>
+
+                    <div id="cashQuickAmounts" class="flex gap-2">
+                        <button type="button" onclick="setCashAmount(20000)" class="flex-1 rounded-lg border border-slate-200 py-1.5 text-[11px] font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-600">Rp 20.000</button>
+                        <button type="button" onclick="setCashAmount(50000)" class="flex-1 rounded-lg border border-slate-200 py-1.5 text-[11px] font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-600">Rp 50.000</button>
+                        <button type="button" onclick="setCashAmount(100000)" class="flex-1 rounded-lg border border-slate-200 py-1.5 text-[11px] font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-600">Rp 100.000</button>
+                    </div>
+
+                    <div id="qrisPaymentDetails" class="hidden rounded-xl border border-indigo-100 bg-indigo-50/70 p-3 text-center">
+                        <p class="text-xs font-bold text-slate-800">Pembayaran QRIS</p>
+                        <p class="mt-1 text-[11px] text-slate-500">Minta pelanggan memindai QRIS resmi toko dan pastikan pembayaran berhasil.</p>
+                        @if($qrisImageUrl)
+                            <img src="{{ $qrisImageUrl }}" alt="QRIS resmi toko" class="mx-auto mt-3 h-44 w-44 rounded-lg border border-slate-200 bg-white object-contain p-2">
+                        @else
+                            <div class="mx-auto mt-3 flex h-44 w-44 flex-col items-center justify-center rounded-lg border-2 border-dashed border-indigo-200 bg-white px-3">
+                                <span class="text-3xl text-indigo-400" aria-hidden="true">▦</span>
+                                <span class="mt-2 text-[11px] font-semibold text-slate-600">QRIS toko belum disiapkan</span>
+                                <span class="mt-1 text-[10px] text-slate-400">Tambahkan file resmi di public/images/qris.png</span>
+                            </div>
+                        @endif
+                        <p class="mt-2 text-xs text-slate-600">Jumlah pembayaran: <strong id="qrisTotalText" class="text-indigo-700">Rp 0</strong></p>
+                    </div>
+
+                    <label id="paymentConfirmationRow" class="hidden items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-[11px] leading-relaxed text-amber-900">
+                        <input type="checkbox" id="paymentConfirmed" name="payment_confirmed" value="1" class="mt-0.5 rounded border-amber-400 text-indigo-600 focus:ring-indigo-500">
+                        <span>Saya sudah memeriksa dan memastikan pembayaran non-tunai diterima oleh toko.</span>
+                    </label>
 
                     <div class="pt-2 border-t border-slate-100 space-y-1">
                         <div class="flex justify-between text-xs text-slate-500">
@@ -207,6 +237,7 @@
         <input type="hidden" name="payment_method" id="checkoutPaymentMethod">
         <input type="hidden" name="discount_percent" id="checkoutDiscountPercent">
         <input type="hidden" name="amount_paid" id="checkoutAmountPaid">
+        <input type="hidden" name="payment_confirmed" id="checkoutPaymentConfirmed" disabled>
         <div id="checkoutItems"></div>
     </form>
 
@@ -273,8 +304,15 @@
                 html += `
                     <div class="bg-white border border-slate-200 rounded-2xl p-3 flex flex-col justify-between hover:border-indigo-300 transition shadow-xs">
                         <div>
-                            <div class="h-20 bg-indigo-50 text-indigo-600 rounded-xl mb-3 flex items-center justify-center">
-                                <span class="text-xs font-semibold">${escapeHtml(p.category)}</span>
+                            <div class="relative h-24 bg-indigo-50 text-indigo-600 rounded-xl mb-3 flex items-center justify-center overflow-hidden">
+                                ${p.image
+                                    ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" class="w-full h-full object-cover">`
+                                    : `<span class="text-xs font-semibold">${escapeHtml(p.category)}</span>`}
+                                ${p.stock < 1
+                                    ? `<span class="absolute top-1.5 left-1.5 bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">Habis</span>`
+                                    : (p.stock <= p.min_stock
+                                        ? `<span class="absolute top-1.5 left-1.5 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">Stok menipis</span>`
+                                        : '')}
                             </div>
                             <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">${escapeHtml(p.barcode)}</span>
                             <h4 class="font-bold text-slate-900 text-sm leading-snug mt-0.5">${escapeHtml(p.name)}</h4>
@@ -310,7 +348,7 @@
             if (existingItem) {
                 existingItem.qty += 1;
             } else {
-                cart.push({ id: product.id, name: product.name, price: product.price, stock: product.stock, qty: 1 });
+                cart.push({ id: product.id, name: product.name, price: product.price, stock: product.stock, image: product.image, qty: 1 });
             }
             renderCart();
         }
@@ -327,7 +365,18 @@
             selectedPayment = method;
             document.getElementById('btnTunai').className = method === 'cash' ? 'py-1.5 bg-white text-indigo-600 rounded-lg shadow-xs font-semibold cursor-pointer transition' : 'py-1.5 text-slate-600 hover:text-slate-900 cursor-pointer transition';
             document.getElementById('btnQris').className = method === 'qris' ? 'py-1.5 bg-white text-indigo-600 rounded-lg shadow-xs font-semibold cursor-pointer transition' : 'py-1.5 text-slate-600 hover:text-slate-900 cursor-pointer transition';
-            document.getElementById('btnTransfer').className = method === 'transfer' ? 'py-1.5 bg-white text-indigo-600 rounded-lg shadow-xs font-semibold cursor-pointer transition' : 'py-1.5 text-slate-600 hover:text-slate-900 cursor-pointer transition';
+            document.getElementById('cashPaymentFields').classList.toggle('hidden', method !== 'cash');
+            document.getElementById('cashQuickAmounts').classList.toggle('hidden', method !== 'cash');
+            document.getElementById('qrisPaymentDetails').classList.toggle('hidden', method !== 'qris');
+            document.getElementById('paymentConfirmationRow').classList.toggle('hidden', method === 'cash');
+            document.getElementById('paymentConfirmationRow').classList.toggle('flex', method !== 'cash');
+            document.getElementById('paymentConfirmed').checked = false;
+            calculateTotal();
+        }
+
+        function setCashAmount(amount) {
+            document.getElementById('cashInput').value = amount;
+            calculateTotal();
         }
 
         function renderCart() {
@@ -346,6 +395,7 @@
                 cart.forEach((item, index) => {
                     html += `
                         <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                            ${item.image ? `<img src="${escapeHtml(item.image)}" alt="" class="w-10 h-10 rounded-lg object-cover mr-2.5 shrink-0">` : ''}
                             <div class="flex-1 pr-2">
                                 <h5 class="text-xs font-bold text-slate-900">${escapeHtml(item.name)}</h5>
                                 <span class="text-[11px] text-indigo-600 font-semibold">Rp ${item.price.toLocaleString('id-ID')}</span>
@@ -370,11 +420,11 @@
             const total = Math.round((subtotal - discountAmount) * 100) / 100;
             let cashReceived = parseFloat(document.getElementById('cashInput').value) || 0;
             let change = cashReceived - total;
-
             document.getElementById('subtotalText').innerText = 'Rp ' + subtotal.toLocaleString('id-ID');
             document.getElementById('discountText').innerText = '- Rp ' + discountAmount.toLocaleString('id-ID');
             document.getElementById('totalText').innerText = 'Rp ' + total.toLocaleString('id-ID');
             document.getElementById('changeText').innerText = change >= 0 ? 'Rp ' + change.toLocaleString('id-ID') : 'Rp 0';
+            document.getElementById('qrisTotalText').innerText = 'Rp ' + total.toLocaleString('id-ID');
         }
 
         function checkout() {
@@ -395,9 +445,16 @@
                 return;
             }
 
+            if (selectedPayment !== 'cash' && !document.getElementById('paymentConfirmed').checked) {
+                alert('Pastikan pembayaran sudah diterima sebelum melanjutkan.');
+                return;
+            }
+
             document.getElementById('checkoutPaymentMethod').value = selectedPayment;
             document.getElementById('checkoutDiscountPercent').value = discountPercent;
             document.getElementById('checkoutAmountPaid').value = amountPaid;
+            document.getElementById('checkoutPaymentConfirmed').value = selectedPayment === 'cash' ? '' : '1';
+            document.getElementById('checkoutPaymentConfirmed').disabled = selectedPayment === 'cash';
             document.getElementById('checkoutItems').replaceChildren();
 
             cart.forEach((item, index) => {

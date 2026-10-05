@@ -79,6 +79,7 @@ class PosCheckoutTest extends TestCase
                 ],
                 'payment_method' => 'qris',
                 'discount_percent' => 0,
+                'payment_confirmed' => '1',
             ]);
 
         $response->assertRedirect(route('pos'))->assertSessionHasErrors('cart');
@@ -115,5 +116,90 @@ class PosCheckoutTest extends TestCase
         $this->assertSame(0, Transaction::count());
         $this->assertSame(3, $product->refresh()->stock);
         $this->assertSame(0, TransactionDetail::count());
+    }
+
+    public function test_qris_checkout_requires_cashier_confirmation(): void
+    {
+        $user = User::factory()->create(['role' => 'kasir']);
+        $category = Category::create(['name' => 'Minuman']);
+        $product = Product::create([
+            'barcode' => 'POS-004',
+            'name' => 'Teh',
+            'category_id' => $category->id,
+            'cost_price' => 5,
+            'selling_price' => 10,
+            'stock' => 3,
+            'min_stock' => 1,
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('pos'))
+            ->post(route('pos.checkout'), [
+                'cart' => [['product_id' => $product->id, 'quantity' => 1]],
+                'payment_method' => 'qris',
+                'discount_percent' => 0,
+            ])
+            ->assertRedirect(route('pos'))
+            ->assertSessionHasErrors('payment_confirmed');
+
+        $this->assertSame(0, Transaction::count());
+
+        $this->actingAs($user)
+            ->post(route('pos.checkout'), [
+                'cart' => [['product_id' => $product->id, 'quantity' => 1]],
+                'payment_method' => 'qris',
+                'discount_percent' => 0,
+                'payment_confirmed' => '1',
+            ])
+            ->assertRedirect(route('pos'));
+
+        $this->assertDatabaseHas('transactions', [
+            'payment_method' => 'qris',
+            'amount_paid' => 10,
+            'change_due' => 0,
+        ]);
+    }
+
+    public function test_transfer_checkout_is_rejected(): void
+    {
+        $user = User::factory()->create(['role' => 'kasir']);
+        $category = Category::create(['name' => 'Minuman']);
+        $product = Product::create([
+            'barcode' => 'POS-005',
+            'name' => 'Kopi',
+            'category_id' => $category->id,
+            'cost_price' => 5,
+            'selling_price' => 10,
+            'stock' => 3,
+            'min_stock' => 1,
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('pos'))
+            ->post(route('pos.checkout'), [
+                'cart' => [['product_id' => $product->id, 'quantity' => 1]],
+                'payment_method' => 'transfer',
+                'discount_percent' => 0,
+            ])
+            ->assertRedirect(route('pos'))
+            ->assertSessionHasErrors('payment_method');
+
+        $this->assertSame(0, Transaction::count());
+        $this->assertSame(3, $product->refresh()->stock);
+    }
+
+    public function test_pos_displays_payment_instructions_and_cash_quick_amounts(): void
+    {
+        $user = User::factory()->create(['role' => 'kasir']);
+
+        $this->actingAs($user)
+            ->get(route('pos'))
+            ->assertOk()
+            ->assertSee('Pembayaran QRIS')
+            ->assertSee('/images/qris.png')
+            ->assertDontSee('Detail Transfer Bank')
+            ->assertDontSee("setPaymentMethod('transfer')")
+            ->assertSee('Rp 50.000')
+            ->assertSee('payment_confirmed');
     }
 }

@@ -7,6 +7,22 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Konfigurasi Pembayaran POS
+
+- **Tunai:** masukkan uang yang diterima atau gunakan tombol nominal cepat; sistem menghitung kembalian.
+- **QRIS:** letakkan gambar QRIS resmi merchant di `public/images/qris.png`. Sistem menampilkan jumlah yang harus dibayar dan kasir harus mencentang konfirmasi setelah memeriksa pembayaran benar-benar masuk.
+QRIS pada aplikasi ini adalah pencatatan pembayaran manual, bukan integrasi/payment gateway. QRIS harus berasal dari merchant toko. Setelah mengubah `.env`, jalankan `php artisan config:clear`.
+
+## Deploy pembaruan ke Railway
+
+1. Jalankan test lokal dengan `php artisan test`.
+2. Periksa perubahan dengan `git status` dan commit hanya file yang memang ingin dipublikasikan. Jangan commit `.env` karena berisi konfigurasi rahasia.
+3. Push commit ke branch GitHub yang terhubung ke service Railway. Untuk branch `main`, perintahnya `git push origin main`.
+4. Pastikan Railway memakai branch tersebut di pengaturan Source/Deployments, lalu tunggu build dan deployment berstatus sukses. Jika build dari GitHub sedang tertunda, buka Deployments dan jalankan redeploy setelah status Railway normal.
+5. Pastikan environment variables production, terutama `APP_KEY`, `APP_URL`, dan koneksi database yang benar. Biarkan konfigurasi database production yang sudah berjalan tetap sama; jangan mengganti kredensial database untuk deploy ini.
+
+Gambar `public/images/qris.png` ikut dalam commit aplikasi sehingga otomatis tersedia setelah deploy. Jika QRIS diganti, commit file gambar penggantinya lalu deploy ulang. Jangan unggah atau menaruh kredensial merchant di GitHub.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

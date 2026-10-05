@@ -26,9 +26,15 @@ class PosController extends Controller
                 'barcode' => $product->barcode,
                 'price' => (float) $product->selling_price,
                 'stock' => $product->stock,
+                'min_stock' => $product->min_stock,
+                'image' => $product->image_url,
                 'category' => $product->category?->name ?? 'Lainnya',
             ])->values(),
             'categories' => Category::orderBy('name')->get(),
+            'qrisImageUrl' => config('payments.qris_image_path')
+                && is_file(public_path(config('payments.qris_image_path')))
+                    ? asset(config('payments.qris_image_path'))
+                    : null,
         ]);
     }
 
@@ -38,9 +44,10 @@ class PosController extends Controller
             'cart' => ['required', 'array', 'min:1'],
             'cart.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'cart.*.quantity' => ['required', 'integer', 'min:1', 'max:999'],
-            'payment_method' => ['required', 'in:cash,qris,transfer'],
+            'payment_method' => ['required', 'in:cash,qris'],
             'discount_percent' => ['required', 'numeric', 'min:0', 'max:100'],
             'amount_paid' => ['nullable', 'numeric', 'min:0'],
+            'payment_confirmed' => ['exclude_unless:payment_method,qris', 'required', 'accepted'],
         ]);
 
         $transaction = DB::transaction(function () use ($validated): Transaction {
@@ -118,6 +125,20 @@ class PosController extends Controller
 
         return redirect()
             ->route('pos')
-            ->with('success', "Transaksi {$transaction->transaction_number} berhasil disimpan.");
+            ->with('success', "Transaksi {$transaction->transaction_number} berhasil disimpan.")
+            ->with('receipt_id', $transaction->id);
+    }
+
+    public function receipt(Transaction $transaction): View
+    {
+        abort_unless(
+            auth()->user()->role === 'admin' || $transaction->user_id === auth()->id(),
+            403,
+            'Anda tidak memiliki akses ke struk ini.'
+        );
+
+        $transaction->load(['details.product', 'user']);
+
+        return view('pos.receipt', ['transaction' => $transaction]);
     }
 }
