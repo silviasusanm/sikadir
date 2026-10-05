@@ -26,6 +26,7 @@ class Product extends Model
     protected $fillable = [
         'barcode',
         'name',
+        'image',
         'category_id',
         'cost_price',
         'selling_price',
@@ -46,6 +47,14 @@ class Product extends Model
         'stock' => 'integer',
         'min_stock' => 'integer',
     ];
+
+    /**
+     * URL publik gambar produk (null jika belum ada gambar).
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image ? asset('storage/'.$this->image) : null;
+    }
 
     public function category(): BelongsTo
     {

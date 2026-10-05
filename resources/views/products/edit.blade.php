@@ -6,7 +6,7 @@
     <div class="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
         <h2 class="text-xl font-bold text-slate-800 mb-6">Edit Produk</h2>
 
-        <form action="{{ route('products.update', $product) }}" method="POST" class="space-y-5">
+        <form action="{{ route('products.update', $product) }}" method="POST" enctype="multipart/form-data" class="space-y-5">
             @csrf
             @method('PUT')
 
@@ -20,6 +20,18 @@
                     <label for="name" class="block text-sm font-semibold text-slate-700 mb-1">Nama Produk</label>
                     <input id="name" name="name" value="{{ old('name', $product->name) }}" required class="w-full rounded-xl border-slate-300">
                     @error('name')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
+                </div>
+
+                {{-- FOTO PRODUK --}}
+                <div class="md:col-span-2">
+                    <label for="image" class="block text-sm font-semibold text-slate-700 mb-2">Foto Produk (opsional)</label>
+        @if($product->image_url)
+            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-24 h-24 rounded-xl object-cover border border-slate-200 mb-2">
+        @endif
+
+                    <input id="image" name="image" type="file" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-600">
+                    <p class="mt-1 text-xs text-slate-400">JPG / PNG / WEBP, maksimal 2 MB.</p>
+                    @error('image')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label for="category_id" class="block text-sm font-semibold text-slate-700 mb-1">Kategori</label>

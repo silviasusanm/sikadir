@@ -39,6 +39,15 @@
                     <input type="text" name="name" value="{{ old('name') }}" placeholder="Nama lengkap barang" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition" required>
                 </div>
 
+
+                {{-- FOTO PRODUK --}}
+                <div class="">
+                    <label for="image" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Foto Produk (opsional)</label>
+                    <input id="image" name="image" type="file" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-600">
+                    <p class="mt-1 text-xs text-slate-400">JPG / PNG / WEBP, maksimal 2 MB.</p>
+                    @error('image')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
+                </div>
+
                 <div>
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Kategori</label>

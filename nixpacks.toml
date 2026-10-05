@@ -8,4 +8,4 @@ nixPkgs = ['php83', 'composer']
 cmds = ['composer install --no-dev --optimize-autoloader']
 
 [start]
-cmd = 'php artisan view:clear && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT'
+cmd = 'php artisan storage:link --force && php artisan view:clear && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT'

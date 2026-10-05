@@ -6,16 +6,31 @@ use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $search = trim((string) $request->query('q', ''));
+
+        $products = Product::with('category')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('name', 'like', "%{$search}%")
+                        ->orWhere('barcode', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
         return view('products.index', [
-            'products' => Product::with('category')->latest()->get(),
+            'products' => $products,
             'categories' => Category::orderBy('name')->get(),
+            'search' => $search,
         ]);
     }
 
@@ -30,6 +45,10 @@ class ProductController extends Controller
     {
         $this->normalizeFormInput($request);
         $validated = $request->validate($this->rules());
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        }
 
         Product::create($validated);
 
@@ -49,6 +68,15 @@ class ProductController extends Controller
         $this->normalizeFormInput($request);
         $validated = $request->validate($this->rules($product));
 
+        if ($request->hasFile('image')) {
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        } else {
+            unset($validated['image']);
+        }
+
         $product->update($validated);
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui.');
@@ -59,6 +87,10 @@ class ProductController extends Controller
         if ($product->transactionDetails()->exists()) {
             return redirect()->route('products.index')
                 ->withErrors(['product' => 'Produk yang sudah tercatat dalam transaksi tidak dapat dihapus.']);
+        }
+
+        if ($product->image) {
+            Storage::disk('public')->delete($product->image);
         }
 
         $product->delete();
@@ -95,6 +127,7 @@ class ProductController extends Controller
                 Rule::unique('products', 'barcode')->ignore($product?->id),
             ],
             'name' => ['required', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'cost_price' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
             'selling_price' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
