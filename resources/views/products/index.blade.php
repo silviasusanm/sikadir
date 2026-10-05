@@ -57,18 +57,6 @@
         </div>
 
 
-        {{-- PENCARIAN --}}
-        <form method="GET" action="{{ route('products.index') }}" class="mb-5 flex gap-2">
-            <div class="relative flex-1">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400"><i class="fa-solid fa-magnifying-glass text-xs"></i></span>
-                <input type="text" name="q" value="{{ $search ?? '' }}" placeholder="Cari nama produk atau kode barcode..." class="w-full h-10 pl-9 pr-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none">
-            </div>
-            <button type="submit" class="px-4 h-10 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold">Cari</button>
-            @if(!empty($search))
-                <a href="{{ route('products.index') }}" class="px-4 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold flex items-center">Reset</a>
-            @endif
-        </form>
-
         {{-- ALERT --}}
         @if(session('success'))
 
@@ -97,10 +85,6 @@
                 <thead>
 
                     <tr class="bg-slate-50/80 text-slate-500 font-semibold border-b border-slate-100">
-
-                        <th class="py-3.5 px-4">
-                            Foto
-                        </th>
 
                         <th class="py-3.5 px-4">
                             Kode/Barcode
@@ -144,16 +128,6 @@
                     @forelse($products as $product)
 
                         <tr class="hover:bg-slate-50/50 transition">
-
-                            <td class="py-3.5 px-4">
-                                @if($product->image_url)
-                                    <img src="{{ $product->image_url }}" alt="{{ $product->name }}" loading="lazy" class="w-12 h-12 rounded-xl object-cover border border-slate-200">
-                                @else
-                                    <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-300 flex items-center justify-center">
-                                        <i class="fa-regular fa-image"></i>
-                                    </div>
-                                @endif
-                            </td>
 
                             <td class="py-3.5 px-4 font-bold text-slate-800">
                                 {{ $product->barcode }}
@@ -254,7 +228,7 @@
 
                         <tr>
 
-                            <td colspan="9" class="text-center py-12 text-slate-400">
+                            <td colspan="8" class="text-center py-12 text-slate-400">
 
                                 <i class="fa-solid fa-box-open text-3xl mb-2 text-slate-300 block"></i>
 
@@ -273,11 +247,6 @@
             </table>
 
         </div>
-
-        {{-- PAGINATION --}}
-        @if($products->hasPages())
-            <div class="mt-5">{{ $products->links() }}</div>
-        @endif
 
     </div>
 
@@ -320,7 +289,6 @@
             <form
                 action="{{ route('products.store') }}"
                 method="POST"
-                enctype="multipart/form-data"
             >
 
                 @csrf
@@ -396,17 +364,10 @@
                 </div>
 
 
-
-                {{-- FOTO PRODUK --}}
+                {{-- HARGA --}}
                 <div class="mb-4 md:col-span-2">
                     <label for="image" class="block text-sm font-semibold text-slate-700 mb-2">Foto Produk (opsional)</label>
-                    <input id="image" name="image" type="file" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-600">
-                    <p class="mt-1 text-xs text-slate-400">JPG / PNG / WEBP, maksimal 2 MB.</p>
-                    @error('image')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
-                </div>
 
-                {{-- HARGA --}}
-                <div class="grid grid-cols-2 gap-2.5 mb-4">
 
 
                     {{-- HARGA BELI --}}
