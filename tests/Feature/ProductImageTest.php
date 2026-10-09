@@ -126,6 +126,10 @@ class ProductImageTest extends TestCase
         $this->actingAs($admin)->post(route('products.store'), $this->payload(['image' => UploadedFile::fake()->image('a.jpg')]));
         $product = Product::first();
 
+        $this->actingAs($admin)->get(route('products.index'))
+            ->assertOk()
+            ->assertSee('enctype="multipart/form-data"', false)
+            ->assertSee('name="image"', false);
         $this->actingAs($admin)->get(route('products.create'))->assertOk()->assertSee('name="image"', false);
         $this->actingAs($admin)->get(route('products.edit', $product))->assertOk()->assertSee('multipart/form-data', false)->assertSee($product->image, false);
         $this->actingAs($admin)->get(route('pos'))->assertOk()->assertSee(basename($product->image), false);

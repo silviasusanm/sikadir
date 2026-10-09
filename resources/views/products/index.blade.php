@@ -289,6 +289,7 @@
             <form
                 action="{{ route('products.store') }}"
                 method="POST"
+                enctype="multipart/form-data"
             >
 
                 @csrf
@@ -332,11 +333,7 @@
                 </div>
 
 
-                {{-- KATEGORI + URL GAMBAR --}}
                 <div class="mb-4">
-
-
-                    {{-- KATEGORI --}}
                     <div>
 
                         <label class="block text-sm font-semibold text-slate-700 mb-2">
@@ -364,48 +361,50 @@
                 </div>
 
 
-                {{-- HARGA --}}
+                {{-- FOTO PRODUK --}}
                 <div class="mb-4 md:col-span-2">
                     <label for="image" class="block text-sm font-semibold text-slate-700 mb-2">Foto Produk (opsional)</label>
+                    <input
+                        id="image"
+                        name="image"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        class="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-600"
+                    >
+                    <p class="mt-1 text-xs text-slate-400">JPG / PNG / WEBP, maksimal 2 MB.</p>
+                    @error('image')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
+                </div>
 
+                {{-- HARGA --}}
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">
+                        Harga Beli (Modal)
+                    </label>
 
+                    <input
+                        type="number"
+                        name="cost_price"
+                        value="{{ old('cost_price', 0) }}"
+                        min="0"
+                        required
+                        class="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none"
+                    >
 
-                    {{-- HARGA BELI --}}
-                    <div>
+                </div>
 
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">
-                            Harga Beli (Modal)
-                        </label>
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">
+                        Harga Jual
+                    </label>
 
-                        <input
-                            type="number"
-                            name="cost_price"
-                            value="{{ old('cost_price', 0) }}"
-                            min="0"
-                            required
-                            class="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none"
-                        >
-
-                    </div>
-
-
-                    {{-- HARGA JUAL --}}
-                    <div>
-
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">
-                            Harga Jual
-                        </label>
-
-                        <input
-                            type="number"
-                            name="price"
-                            value="{{ old('price', 0) }}"
-                            min="0"
-                            required
-                            class="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none"
-                        >
-
-                    </div>
+                    <input
+                        type="number"
+                        name="price"
+                        value="{{ old('price', 0) }}"
+                        min="0"
+                        required
+                        class="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 outline-none"
+                    >
 
                 </div>
 
